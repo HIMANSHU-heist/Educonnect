@@ -1,0 +1,2351 @@
+import React, { useState, useEffect, createContext, useContext, useRef } from 'react';
+
+// ==========================================
+// 1. MOCK DATA DEFINITIONS (Indian Context)
+// ==========================================
+
+const BATCHES = [
+  { id: 'B-10', name: 'Batch A (10th Std - ICSE)', code: 'BATCH_A' },
+  { id: 'B-11', name: 'Batch B (11th Std - JEE Core)', code: 'BATCH_B' },
+  { id: 'B-12', name: 'Batch C (12th Std - NEET)', code: 'BATCH_C' },
+];
+
+const STUDENTS = [
+  { id: 'STU-001', name: 'Rahul Patil', email: 'rahul@educonnect.com', batch: 'Batch B', attendance: 87, rank: 4, doubtsSolved: 23, totalTests: 12, parentId: 'PAR-001' },
+  { id: 'STU-002', name: 'Priya Sharma', email: 'priya@educonnect.com', batch: 'Batch B', attendance: 92, rank: 2, doubtsSolved: 14, totalTests: 12, parentId: 'PAR-002' },
+  { id: 'STU-003', name: 'Arjun Deshmukh', email: 'arjun@educonnect.com', batch: 'Batch A', attendance: 78, rank: 12, doubtsSolved: 8, totalTests: 10, parentId: 'PAR-003' },
+  { id: 'STU-004', name: 'Sneha Kulkarni', email: 'sneha@educonnect.com', batch: 'Batch C', attendance: 95, rank: 1, doubtsSolved: 42, totalTests: 15, parentId: 'PAR-004' },
+  { id: 'STU-005', name: 'Amit Joshi', email: 'amit@educonnect.com', batch: 'Batch A', attendance: 85, rank: 8, doubtsSolved: 11, totalTests: 10, parentId: 'PAR-005' },
+];
+
+const TEACHERS = [
+  { id: 'TCH-001', name: 'Priya Kulkarni Ma\'am', subject: 'Mathematics', qualification: 'M.Sc. IIT Bombay', exp: '8+ Yrs', rating: 4.9, charges: '₹600/hr', city: 'Pune (Shivajinagar)' },
+  { id: 'TCH-002', name: 'R. K. Patil Sir', subject: 'Physics', qualification: 'B.Tech NIT Nagpur', exp: '12+ Yrs', rating: 4.8, charges: '₹750/hr', city: 'Mumbai (Dadar)' },
+  { id: 'TCH-003', name: 'Dr. Anita Roy', subject: 'Chemistry', qualification: 'Ph.D. IISc', exp: '10+ Yrs', rating: 4.7, charges: '₹800/hr', city: 'Pune (Kothrud)' },
+  { id: 'TCH-004', name: 'Sanjay Deshpande', subject: 'Biology', qualification: 'M.Sc. Pune University', exp: '15+ Yrs', rating: 4.9, charges: '₹700/hr', city: 'Nashik' },
+];
+
+const LECTURES = [
+  { id: 'LEC-01', subject: 'Mathematics', title: 'Quadratic Equations - Session 3', teacher: 'Priya Ma\'am', duration: '1h 30m', date: 'Today, 4:00 PM', isLive: true },
+  { id: 'LEC-02', subject: 'Mathematics', title: 'Complex Numbers Introduction', teacher: 'Priya Ma\'am', duration: '1h 15m', date: 'Yesterday', isLive: false },
+  { id: 'LEC-03', subject: 'Science', title: 'Optics - Reflection & Refraction', teacher: 'R. K. Patil Sir', duration: '2h 00m', date: '2 days ago', isLive: false },
+  { id: 'LEC-04', subject: 'English', title: 'Tenses and Grammar Rules', teacher: 'Mrs. Sen', duration: '1h 00m', date: '3 days ago', isLive: false },
+  { id: 'LEC-05', subject: 'Science', title: 'Carbon and its Compounds', teacher: 'Dr. Anita Roy', duration: '1h 45m', date: '4 days ago', isLive: false },
+];
+
+const NOTES = [
+  { id: 'NOT-01', subject: 'Mathematics', title: 'Quadratic Formula Shortcuts', teacher: 'Priya Ma\'am', date: '24 Jun 2026', fileType: 'PDF', size: '2.4 MB' },
+  { id: 'NOT-02', subject: 'Science', title: 'Ray Diagrams Cheat Sheet', teacher: 'R. K. Patil Sir', date: '21 Jun 2026', fileType: 'PDF', size: '4.1 MB' },
+  { id: 'NOT-03', subject: 'Chemistry', title: 'Periodic Table Trends', teacher: 'Dr. Anita Roy', date: '18 Jun 2026', fileType: 'PDF', size: '1.8 MB' },
+  { id: 'NOT-04', subject: 'English', title: 'Active & Passive Voice Notes', teacher: 'Mrs. Sen', date: '15 Jun 2026', fileType: 'PDF', size: '1.2 MB' },
+];
+
+const MARKET_CHAPTERS = [
+  { id: 'CHP-01', title: 'Integration Masterclass', subject: 'Mathematics', price: 99, rating: 4.9, buyers: 342, duration: '6 Hours', teacher: 'Priya Ma\'am' },
+  { id: 'CHP-02', title: 'Rotational Dynamics Simplified', subject: 'Physics', price: 149, rating: 4.8, buyers: 219, duration: '8 Hours', teacher: 'R. K. Patil Sir' },
+  { id: 'CHP-03', title: 'Organic Chemistry Basics', subject: 'Chemistry', price: 79, rating: 4.7, buyers: 412, duration: '5 Hours', teacher: 'Dr. Anita Roy' },
+  { id: 'CHP-04', title: 'Genetics & Evolution Essentials', subject: 'Biology', price: 129, rating: 4.9, buyers: 156, duration: '7 Hours', teacher: 'Sanjay Deshpande' },
+];
+
+const SCHEDULE_ITEMS = [
+  { day: 'Mon', items: [{ batch: 'Batch B', sub: 'Math', time: '04:00 PM' }, { batch: 'Batch C', sub: 'Chem', time: '06:00 PM' }] },
+  { day: 'Tue', items: [{ batch: 'Batch A', sub: 'Sci', time: '03:30 PM' }, { batch: 'Batch B', sub: 'Phys', time: '05:30 PM' }] },
+  { day: 'Wed', items: [{ batch: 'Batch B', sub: 'Math', time: '04:00 PM' }, { batch: 'Batch C', sub: 'Bio', time: '06:00 PM' }] },
+  { day: 'Thu', items: [{ batch: 'Batch A', sub: 'Sci', time: '03:30 PM' }, { batch: 'Batch B', sub: 'Chem', time: '05:30 PM' }] },
+  { day: 'Fri', items: [{ batch: 'Batch B', sub: 'Phys', time: '04:00 PM' }, { batch: 'Batch C', sub: 'Math', time: '06:00 PM' }] },
+  { day: 'Sat', items: [{ batch: 'Batch A', sub: 'Eng', time: '02:00 PM' }, { batch: 'Batch B', sub: 'Math', time: '04:00 PM' }] },
+];
+
+const TEST_PERFORMANCE = [72, 78, 85, 80, 91, 88]; // Last 6 months test averages for Rahul Patil
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+
+// ==========================================
+// 2. AUTHENTICATION & ROUTING CONTEXTS
+// ==========================================
+
+const AuthContext = createContext(null);
+const NavigationContext = createContext(null);
+const ToastContext = createContext(null);
+
+export default function App() {
+  const [user, setUser] = useState(() => {
+    const saved = localStorage.getItem('edu_user');
+    return saved ? JSON.parse(saved) : null;
+  });
+
+  const [currentPath, setCurrentPath] = useState(() => {
+    return window.location.hash ? window.location.hash.replace('#', '') : '/';
+  });
+
+  const [toasts, setToasts] = useState([]);
+  const [deviceMode, setDeviceMode] = useState('responsive'); // 'responsive' or 'mobile-emulator'
+
+  useEffect(() => {
+    const handleHashChange = () => {
+      setCurrentPath(window.location.hash ? window.location.hash.replace('#', '') : '/');
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  const navigateTo = (path) => {
+    window.location.hash = path;
+    setCurrentPath(path);
+  };
+
+  const login = (role, id) => {
+    let userData = null;
+    if (role === 'student') userData = { id, role, name: 'Rahul Patil', batch: 'Batch B', parentId: 'PAR-001' };
+    if (role === 'teacher') userData = { id, role, name: 'Priya Kulkarni Ma\'am', subject: 'Mathematics' };
+    if (role === 'management') userData = { id, role, name: 'EduConnect Admin Panel' };
+    if (role === 'parent') userData = { id, role, name: 'Mr. Deepak Patil', childName: 'Rahul Patil', childId: 'STU-001' };
+
+    if (userData) {
+      setUser(userData);
+      localStorage.setItem('edu_user', JSON.stringify(userData));
+      addToast('Login Successful!', 'success');
+      
+      // Redirect to dashboard
+      if (role === 'student') navigateTo('/student/dashboard');
+      if (role === 'teacher') navigateTo('/teacher/dashboard');
+      if (role === 'management') navigateTo('/management/dashboard');
+      if (role === 'parent') navigateTo('/parent/dashboard');
+    }
+  };
+
+  const logout = () => {
+    setUser(null);
+    localStorage.removeItem('edu_user');
+    addToast('Logged out successfully', 'info');
+    navigateTo('/');
+  };
+
+  const addToast = (message, type = 'success') => {
+    const id = Date.now();
+    setToasts((prev) => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 3000);
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, login, logout }}>
+      <NavigationContext.Provider value={{ currentPath, navigateTo }}>
+        <ToastContext.Provider value={{ addToast }}>
+          <div className="min-h-screen bg-slate-50 font-sans text-slate-800">
+            {/* Emulator Header */}
+            <div className="bg-slate-900 text-white px-4 py-2 flex justify-between items-center text-xs border-b border-slate-800 shrink-0">
+              <span className="font-semibold flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                EduConnect Super App (Phase 1 Prototype)
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setDeviceMode('responsive')}
+                  className={`px-2.5 py-1 rounded transition-all ${
+                    deviceMode === 'responsive' ? 'bg-indigo-600 font-semibold' : 'bg-slate-800 hover:bg-slate-700'
+                  }`}
+                >
+                  💻 Desktop Responsive
+                </button>
+                <button
+                  onClick={() => setDeviceMode('mobile-emulator')}
+                  className={`px-2.5 py-1 rounded transition-all ${
+                    deviceMode === 'mobile-emulator' ? 'bg-indigo-600 font-semibold' : 'bg-slate-800 hover:bg-slate-700'
+                  }`}
+                >
+                  📱 Mobile Simulator
+                </button>
+              </div>
+            </div>
+
+            {/* Layout Wrapper */}
+            <div className="flex justify-center bg-slate-100 min-h-[calc(100vh-33px)]">
+              {deviceMode === 'mobile-emulator' ? (
+                /* Mobile Emulator Shell */
+                <div className="w-full max-w-[430px] h-[850px] my-6 bg-white rounded-[40px] border-[12px] border-slate-950 shadow-2xl relative overflow-hidden flex flex-col">
+                  {/* Status Bar */}
+                  <div className="w-full h-8 bg-slate-950 text-white flex justify-between items-center px-6 text-xs select-none shrink-0">
+                    <span>12:30 AM</span>
+                    <div className="w-24 h-4 bg-slate-950 rounded-full absolute left-1/2 -translate-x-1/2 top-1.5 flex justify-center items-center">
+                      <span className="w-3 h-3 rounded-full bg-slate-900 border border-slate-800"></span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span>5G</span>
+                      <div className="w-5 h-2.5 border border-white/60 rounded-sm p-0.5 flex">
+                        <div className="h-full w-4 bg-white rounded-2xs"></div>
+                      </div>
+                    </div>
+                  </div>
+                  {/* Internal App Frame */}
+                  <div className="flex-1 overflow-y-auto bg-slate-50 flex flex-col relative">
+                    <Router />
+                  </div>
+                </div>
+              ) : (
+                /* Responsive Full Screen Shell */
+                <div className="w-full bg-slate-50 flex flex-col min-h-full">
+                  <Router />
+                </div>
+              )}
+            </div>
+
+            {/* TOAST SYSTEM */}
+            <div className="fixed top-12 right-4 z-50 flex flex-col gap-2 max-w-sm">
+              {toasts.map((t) => (
+                <div
+                  key={t.id}
+                  className={`p-4 rounded-xl shadow-lg border text-sm flex items-center justify-between gap-3 animate-slide-in ${
+                    t.type === 'success'
+                      ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                      : t.type === 'error'
+                      ? 'bg-rose-50 border-rose-200 text-rose-800'
+                      : 'bg-indigo-50 border-indigo-200 text-indigo-800'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    {t.type === 'success' && (
+                      <svg className="w-5 h-5 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
+                    )}
+                    {t.type === 'error' && (
+                      <svg className="w-5 h-5 text-rose-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                    )}
+                    {t.type === 'info' && (
+                      <svg className="w-5 h-5 text-indigo-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    )}
+                    <span>{t.message}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* FLOATING ADMISSION AI CHATBOT (Only shown on Landing page /) */}
+            {currentPath === '/' && <AdmissionChatbot />}
+          </div>
+        </ToastContext.Provider>
+      </NavigationContext.Provider>
+    </AuthContext.Provider>
+  );
+}
+
+// ==========================================
+// 3. INTERNAL CLIENT-SIDE ROUTER
+// ==========================================
+
+function Router() {
+  const { currentPath } = useContext(NavigationContext);
+  const { user } = useContext(AuthContext);
+
+  // Authentication guards
+  if (currentPath.startsWith('/student') && (!user || user.role !== 'student')) return <LoginPage forceRole="student" />;
+  if (currentPath.startsWith('/teacher') && (!user || user.role !== 'teacher')) return <LoginPage forceRole="teacher" />;
+  if (currentPath.startsWith('/management') && (!user || user.role !== 'management')) return <LoginPage forceRole="management" />;
+  if (currentPath.startsWith('/parent') && (!user || user.role !== 'parent')) return <LoginPage forceRole="parent" />;
+
+  switch (currentPath) {
+    case '/':
+      return <LandingPage />;
+    case '/login':
+      return <LoginPage />;
+    // Student Routes
+    case '/student/dashboard':
+      return <StudentDashboard tab="home" />;
+    case '/student/lectures':
+      return <StudentDashboard tab="lectures" />;
+    case '/student/notes':
+      return <StudentDashboard tab="notes" />;
+    case '/student/doubts':
+      return <StudentDashboard tab="doubts" />;
+    case '/student/profile':
+      return <StudentDashboard tab="profile" />;
+    // Teacher Routes
+    case '/teacher/dashboard':
+      return <TeacherDashboard tab="home" />;
+    case '/teacher/upload':
+      return <TeacherDashboard tab="upload" />;
+    case '/teacher/attendance':
+      return <TeacherDashboard tab="attendance" />;
+    case '/teacher/schedule':
+      return <TeacherDashboard tab="schedule" />;
+    case '/teacher/payments':
+      return <TeacherDashboard tab="payments" />;
+    // Management Routes
+    case '/management/dashboard':
+      return <ManagementDashboard tab="home" />;
+    case '/management/scheduler':
+      return <ManagementDashboard tab="scheduler" />;
+    case '/management/fees':
+      return <ManagementDashboard tab="fees" />;
+    case '/management/analytics':
+      return <ManagementDashboard tab="analytics" />;
+    case '/management/settings':
+      return <ManagementDashboard tab="settings" />;
+    // Parent Routes
+    case '/parent/dashboard':
+      return <ParentDashboard tab="home" />;
+    case '/parent/progress':
+      return <ParentDashboard tab="progress" />;
+    case '/parent/attendance':
+      return <ParentDashboard tab="attendance" />;
+    case '/parent/fees':
+      return <ParentDashboard tab="fees" />;
+    case '/parent/feedback':
+      return <ParentDashboard tab="feedback" />;
+    // Marketplace Routes
+    case '/marketplace':
+      return <MarketplaceLayout view="tuition" />;
+    case '/marketplace/tuition':
+      return <MarketplaceLayout view="tuition" />;
+    case '/marketplace/chapters':
+      return <MarketplaceLayout view="chapters" />;
+    default:
+      return <LandingPage />;
+  }
+}
+
+// ==========================================
+// 4. MAIN LAYOUT AND COMMON COMPONENTS
+// ==========================================
+
+function Header({ title, subtitle, onNotificationClick }) {
+  const { logout, user } = useContext(AuthContext);
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  const mockNotifs = [
+    { id: 1, text: 'Live Lecture: "Quadratic Equations" starting in 15 mins.', time: 'Just now' },
+    { id: 2, text: 'New ray diagram Physics Notes uploaded by Patil Sir.', time: '2 hours ago' },
+    { id: 3, text: 'Reminder: Monthly Fee due date is approaching.', time: '1 day ago' },
+  ];
+
+  return (
+    <header className="sticky top-0 bg-slate-900 text-white z-20 px-4 py-3 shadow-md flex justify-between items-center shrink-0">
+      <div className="flex flex-col">
+        <h1 className="text-base font-bold text-indigo-400">EduConnect</h1>
+        {title && <p className="text-xs text-slate-300 font-medium">{title}</p>}
+      </div>
+      
+      <div className="flex items-center gap-3 relative">
+        {/* Notification Bell */}
+        <button 
+          onClick={() => setShowNotifications(!showNotifications)}
+          className="relative p-1.5 hover:bg-slate-800 rounded-full transition-all"
+        >
+          <span className="absolute top-1 right-1 w-2 h-2 bg-rose-500 rounded-full"></span>
+          <svg className="w-5 h-5 text-slate-300 hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+          </svg>
+        </button>
+
+        {showNotifications && (
+          <div className="absolute right-0 top-10 w-72 bg-white rounded-xl shadow-2xl border border-slate-100 py-2 text-slate-800 z-50">
+            <div className="px-4 py-2 border-b border-slate-100 flex justify-between items-center">
+              <span className="font-bold text-xs text-slate-600">Notifications</span>
+              <button onClick={() => setShowNotifications(false)} className="text-xs text-indigo-600 hover:underline">Dismiss All</button>
+            </div>
+            <div className="max-h-60 overflow-y-auto">
+              {mockNotifs.map((n) => (
+                <div key={n.id} className="px-4 py-3 hover:bg-slate-50 border-b border-slate-50 transition-colors">
+                  <p className="text-xs font-medium text-slate-700">{n.text}</p>
+                  <span className="text-[10px] text-slate-400 mt-1 block">{n.time}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* User initials / Quick Logout */}
+        <button 
+          onClick={logout}
+          className="bg-indigo-600 hover:bg-indigo-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold transition-all border border-indigo-400"
+          title="Logout"
+        >
+          {user ? user.name.split(' ').map(n=>n[0]).join('') : 'U'}
+        </button>
+      </div>
+    </header>
+  );
+}
+
+// Global Bottom Nav Bar Component
+function BottomNavigation({ activeTab, tabs, onTabChange }) {
+  return (
+    <nav className="sticky bottom-0 bg-slate-900 text-slate-400 border-t border-slate-800 flex justify-around items-center py-2 shrink-0 z-20 shadow-xl">
+      {tabs.map((tab) => {
+        const isActive = activeTab === tab.id;
+        return (
+          <button
+            key={tab.id}
+            onClick={() => onTabChange(tab.id)}
+            className={`flex flex-col items-center gap-1 flex-1 py-1 transition-all ${
+              isActive ? 'text-indigo-400 font-bold scale-105' : 'hover:text-slate-200'
+            }`}
+          >
+            <div className="w-5 h-5">{tab.icon}</div>
+            <span className="text-[10px] truncate max-w-[64px]">{tab.label}</span>
+          </button>
+        );
+      })}
+    </nav>
+  );
+}
+
+// ==========================================
+// 5. SCREEN 1: LANDING PAGE
+// ==========================================
+
+function LandingPage() {
+  const { navigateTo } = useContext(NavigationContext);
+
+  const features = [
+    { title: 'Live Lectures', desc: 'Direct digital streaming from your coaching teachers with live Q&A.', icon: <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className="w-6 h-6 text-indigo-600"><path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg> },
+    { title: 'AI Doubt Solver', desc: '24/7 hyper-intelligent instant answers mapped specifically to your coaching curriculum.', icon: <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className="w-6 h-6 text-indigo-600"><path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364.364l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg> },
+    { title: 'Smart Scheduling', desc: 'Automated digital class calendars with instant notifications to avoid any lecture clashes.', icon: <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className="w-6 h-6 text-indigo-600"><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg> },
+    { title: 'Parent Tracking', desc: 'Real-time student progress tracking, live attendance dashboards, and digital feedback loops.', icon: <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className="w-6 h-6 text-indigo-600"><path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg> },
+    { title: 'Home Tuition Market', desc: 'Verified list of elite neighborhood teachers available for personalized physical mentoring.', icon: <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className="w-6 h-6 text-indigo-600"><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg> },
+    { title: 'Chapter Learning', desc: 'Pay-per-chapter marketplace module. Buy premium micro-lectures on tough topics.', icon: <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className="w-6 h-6 text-indigo-600"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg> },
+  ];
+
+  const testimonials = [
+    { name: 'Sanjay Rawat', role: 'Director, Rawat IIT Classes', text: 'EduConnect saved me over 30 hours of manual scheduling every week. The parents are incredibly happy with the digital transparency!' },
+    { name: 'Dr. Meena Deshmukh', role: 'Owner, Apex NEET Academy', text: 'The Chapter Marketplace boosted our revenues by 25%. Students love buying just the concepts they need.' },
+    { name: 'Kunal Patil', role: 'Parent of Arjun (10th Std)', text: 'I get instantly notified when my son misses a lecture. EduConnect has made him incredibly self-disciplined!' },
+  ];
+
+  return (
+    <div className="flex-1 flex flex-col justify-between">
+      {/* Hero Section */}
+      <section className="bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 text-white px-6 py-16 text-center flex flex-col items-center">
+        <span className="bg-indigo-500/20 text-indigo-300 font-semibold text-xs px-3 py-1 rounded-full border border-indigo-500/30 mb-4 animate-pulse">
+          🚀 India's #1 Coaching Class Suite
+        </span>
+        <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight mb-4 max-w-2xl leading-tight">
+          EduConnect — <span className="text-indigo-400">Har Class Digital,</span> Har Student Connected
+        </h1>
+        <p className="text-base md:text-lg text-slate-300 max-w-md font-medium leading-relaxed mb-1">
+          Coaching classes ke liye India ka #1 platform.
+        </p>
+        <p className="text-xs md:text-sm text-slate-400 italic max-w-md mb-8">
+          "प्रगति की ओर बढ़ते कदम, डिजिटल कोचिंग के संग।"
+        </p>
+
+        <div className="flex flex-col sm:flex-row gap-3 w-full max-w-xs sm:max-w-md justify-center">
+          <button 
+            onClick={() => navigateTo('/login')} 
+            className="bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-indigo-600/30 transition-all flex items-center justify-center gap-2"
+          >
+            <span>Enter App / Portal</span>
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7"/></svg>
+          </button>
+          <button 
+            onClick={() => navigateTo('/marketplace')} 
+            className="bg-slate-800 hover:bg-slate-700 active:bg-slate-900 border border-slate-700 font-bold py-3 px-6 rounded-xl text-slate-200 transition-all"
+          >
+            Explore Marketplace
+          </button>
+        </div>
+      </section>
+
+      {/* Main Features */}
+      <section className="px-6 py-12 max-w-5xl mx-auto">
+        <div className="text-center mb-10">
+          <h2 className="text-2xl font-bold text-slate-900">Modern Digital Capabilities</h2>
+          <p className="text-xs text-slate-500 mt-1">Supercharging Indian institutions with elite feature sets.</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {features.map((f, i) => (
+            <div key={i} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-xs hover:shadow-md hover:border-slate-200 transition-all flex flex-col gap-3">
+              <div className="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center shrink-0">
+                {f.icon}
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-900 text-sm">{f.title}</h3>
+                <p className="text-xs text-slate-500 mt-1 leading-relaxed">{f.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Testimonials */}
+      <section className="bg-slate-100 py-12 px-6">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-bold text-slate-900">Loved by 100+ Coaching Classes</h2>
+            <p className="text-xs text-slate-500 mt-1">Real stories from real owners, students, and parents.</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {testimonials.map((t, i) => (
+              <div key={i} className="bg-white p-6 rounded-2xl border border-slate-100 shadow-xs flex flex-col justify-between">
+                <p className="text-xs italic text-slate-600 leading-relaxed">"{t.text}"</p>
+                <div className="mt-4 pt-4 border-t border-slate-100">
+                  <h4 className="font-bold text-xs text-slate-800">{t.name}</h4>
+                  <span className="text-[10px] text-slate-400">{t.role}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-slate-900 text-slate-400 py-8 px-6 text-center border-t border-slate-800 shrink-0">
+        <div className="max-w-5xl mx-auto flex flex-col items-center gap-3">
+          <h3 className="font-bold text-white text-base">EduConnect</h3>
+          <p className="text-xs text-slate-500 max-w-sm">
+            Bridging the gap between premier coaching institutions, busy parents, passionate teachers, and hardworking students.
+          </p>
+          <div className="text-[10px] text-slate-600 mt-4">
+            © 2026 EduConnect Technologies Pvt. Ltd. All Rights Reserved.
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+// ==========================================
+// 6. SCREEN 2: LOGIN PAGE (MOBILE FIRST)
+// ==========================================
+
+function LoginPage({ forceRole }) {
+  const { login } = useContext(AuthContext);
+  const { addToast } = useContext(ToastContext);
+
+  const [selectedRole, setSelectedRole] = useState(forceRole || 'student');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Auto-fill test credentials
+  const fillCredentials = (role) => {
+    setSelectedRole(role);
+    if (role === 'student') { setUsername('STU-001'); setPassword('student123'); }
+    if (role === 'teacher') { setUsername('TCH-001'); setPassword('teacher123'); }
+    if (role === 'management') { setUsername('MGT-001'); setPassword('admin123'); }
+    if (role === 'parent') { setUsername('PAR-001'); setPassword('parent123'); }
+  };
+
+  const handleLoginSubmit = (e) => {
+    e.preventDefault();
+    if (!username || !password) {
+      addToast('Please fill all fields', 'error');
+      return;
+    }
+
+    setIsSubmitting(true);
+    
+    setTimeout(() => {
+      setIsSubmitting(false);
+      let isValid = false;
+
+      if (selectedRole === 'student' && username === 'STU-001' && password === 'student123') isValid = true;
+      if (selectedRole === 'teacher' && username === 'TCH-001' && password === 'teacher123') isValid = true;
+      if (selectedRole === 'management' && username === 'MGT-001' && password === 'admin123') isValid = true;
+      if (selectedRole === 'parent' && username === 'PAR-001' && password === 'parent123') isValid = true;
+
+      if (isValid) {
+        login(selectedRole, username);
+      } else {
+        addToast('Invalid credentials for selected role!', 'error');
+      }
+    }, 1000);
+  };
+
+  const roles = [
+    { id: 'student', title: 'Student', icon: '🎓', color: 'bg-blue-50 border-blue-200 text-blue-700' },
+    { id: 'teacher', title: 'Teacher', icon: '🏫', color: 'bg-emerald-50 border-emerald-200 text-emerald-700' },
+    { id: 'management', title: 'Admin', icon: '🏢', color: 'bg-purple-50 border-purple-200 text-purple-700' },
+    { id: 'parent', title: 'Parent', icon: '👪', color: 'bg-amber-50 border-amber-200 text-amber-700' },
+  ];
+
+  return (
+    <div className="flex-1 flex flex-col justify-center items-center px-6 py-12 bg-slate-50">
+      <div className="w-full max-w-sm bg-white rounded-3xl border border-slate-100 shadow-xl p-6">
+        <div className="text-center mb-6">
+          <h2 className="text-2xl font-black text-slate-900 tracking-tight flex items-center justify-center gap-1.5">
+            <span className="w-2.5 h-6 bg-indigo-600 rounded-full"></span>
+            EduConnect
+          </h2>
+          <p className="text-xs text-slate-500 mt-1">Indian Coaching Class Ecosystem</p>
+        </div>
+
+        {/* Who are you selector */}
+        <div className="mb-6">
+          <label className="block text-xs font-bold text-slate-600 mb-2 text-center">Select Your Role</label>
+          <div className="grid grid-cols-4 gap-2">
+            {roles.map((r) => (
+              <button
+                key={r.id}
+                type="button"
+                onClick={() => setSelectedRole(r.id)}
+                className={`py-2 px-1 rounded-xl border flex flex-col items-center gap-1 transition-all ${
+                  selectedRole === r.id 
+                    ? `${r.color} ring-2 ring-indigo-500 ring-offset-1 scale-102 font-bold` 
+                    : 'bg-white border-slate-100 text-slate-400 opacity-60 hover:opacity-100'
+                }`}
+              >
+                <span className="text-lg">{r.icon}</span>
+                <span className="text-[10px]">{r.title}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Credentials Form */}
+        <form onSubmit={handleLoginSubmit} className="space-y-4">
+          <div>
+            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Unique ID</label>
+            <input
+              type="text"
+              placeholder={`e.g. ${selectedRole === 'student' ? 'STU-001' : selectedRole === 'teacher' ? 'TCH-001' : selectedRole === 'management' ? 'MGT-001' : 'PAR-001'}`}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="w-full px-4 py-2 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Passkey</label>
+            <input
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-4 py-2 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white font-bold py-2.5 rounded-xl text-sm shadow-md shadow-indigo-600/10 transition-all flex justify-center items-center gap-2"
+          >
+            {isSubmitting ? (
+              <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+            ) : (
+              'Verify & Login'
+            )}
+          </button>
+        </form>
+
+        {/* Demo Mode Switcher (For easy evaluator walkthrough) */}
+        <div className="mt-6 pt-6 border-t border-slate-100 bg-slate-50 rounded-2xl p-3.5">
+          <span className="text-[10px] font-bold text-indigo-700 tracking-wider block text-center mb-2">QUICK DEMO MODE (CLICK TO LOG IN)</span>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={() => fillCredentials('student')}
+              className="text-[10px] bg-blue-100/50 hover:bg-blue-100 text-blue-800 py-1.5 px-2 rounded-lg text-left truncate flex items-center justify-between"
+            >
+              <span>Student (STU-001)</span>
+              <span>➡️</span>
+            </button>
+            <button
+              onClick={() => fillCredentials('teacher')}
+              className="text-[10px] bg-emerald-100/50 hover:bg-emerald-100 text-emerald-800 py-1.5 px-2 rounded-lg text-left truncate flex items-center justify-between"
+            >
+              <span>Teacher (TCH-001)</span>
+              <span>➡️</span>
+            </button>
+            <button
+              onClick={() => fillCredentials('management')}
+              className="text-[10px] bg-purple-100/50 hover:bg-purple-100 text-purple-800 py-1.5 px-2 rounded-lg text-left truncate flex items-center justify-between"
+            >
+              <span>Admin (MGT-001)</span>
+              <span>➡️</span>
+            </button>
+            <button
+              onClick={() => fillCredentials('parent')}
+              className="text-[10px] bg-amber-100/50 hover:bg-amber-100 text-amber-800 py-1.5 px-2 rounded-lg text-left truncate flex items-center justify-between"
+            >
+              <span>Parent (PAR-001)</span>
+              <span>➡️</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
+// 7. SCREEN 3: STUDENT DASHBOARD
+// ==========================================
+
+function StudentDashboard({ tab }) {
+  const { navigateTo } = useContext(NavigationContext);
+  const { addToast } = useContext(ToastContext);
+
+  const [activeTab, setActiveTab] = useState(tab || 'home');
+  const [activeSubjectFilter, setActiveSubjectFilter] = useState('All');
+  const [activeVideoLecture, setActiveVideoLecture] = useState(null);
+  const [activeNotePreview, setActiveNotePreview] = useState(null);
+  
+  // Custom doubt solver chat memory
+  const [doubtMessages, setDoubtMessages] = useState([
+    { sender: 'student', text: 'Hello AI! Can you solve this Physics equation: s = ut + 0.5 * a * t^2. If u=5, a=2, t=3, what is s?' },
+    { sender: 'ai', text: 'Namaste! I am your EduConnect AI Assistant trained on your exact Maharashtra syllabus.' },
+    { sender: 'ai', text: 'Let\'s substitute the values in:\ns = (5 * 3) + 0.5 * 2 * (3^2)\ns = 15 + 1 * 9\ns = 24 meters!\nWould you like similar formulas?' },
+  ]);
+  const [currentDoubtText, setCurrentDoubtText] = useState('');
+  const [aiTyping, setAiTyping] = useState(false);
+
+  useEffect(() => {
+    setActiveTab(tab);
+  }, [tab]);
+
+  const handleTabChange = (newTab) => {
+    setActiveTab(newTab);
+    navigateTo(`/student/${newTab === 'home' ? 'dashboard' : newTab}`);
+  };
+
+  const sendDoubt = () => {
+    if (!currentDoubtText.trim()) return;
+    const studentText = currentDoubtText;
+    setDoubtMessages((p) => [...p, { sender: 'student', text: studentText }]);
+    setCurrentDoubtText('');
+    setAiTyping(true);
+
+    setTimeout(() => {
+      let aiText = "That's a fantastic academic query! Let me solve that for you based on the Class 10/11 standards. According to your textbook formula, the correct answer is derived using standard steps. Let's do another concept!";
+      if (studentText.toLowerCase().includes('equation') || studentText.toLowerCase().includes('math')) {
+        aiText = "Based on standard Algebra Chapter 2 (Quadratic Equations), the general solution for ax² + bx + c = 0 is x = [-b ± √(b² - 4ac)] / 2a. Would you like me to work out a specific textbook problem?";
+      }
+      setDoubtMessages((p) => [...p, { sender: 'ai', text: aiText }]);
+      setAiTyping(false);
+      addToast('AI answered your doubt!', 'success');
+    }, 1500);
+  };
+
+  const triggerDownload = (title) => {
+    addToast(`Downloading "${title}" ...`, 'info');
+    setTimeout(() => {
+      addToast(`Downloaded "${title}" successfully.`, 'success');
+    }, 2000);
+  };
+
+  const studentTabs = [
+    { id: 'home', label: 'Home', icon: <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg> },
+    { id: 'lectures', label: 'Lectures', icon: <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg> },
+    { id: 'notes', label: 'Notes', icon: <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg> },
+    { id: 'doubts', label: 'Doubts', icon: <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg> },
+    { id: 'profile', label: 'Profile', icon: <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg> },
+  ];
+
+  return (
+    <div className="flex-1 flex flex-col justify-between h-full bg-slate-50">
+      <Header title="Student Portal" />
+
+      {/* Main Container */}
+      <div className="flex-1 p-4 overflow-y-auto max-w-3xl mx-auto w-full">
+        {/* ==================== HOME TAB ==================== */}
+        {activeTab === 'home' && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-slate-900">Namaste, Rahul! 👋</h2>
+                <span className="text-xs text-slate-500">10th Standard (Batch B)</span>
+              </div>
+              <span className="bg-emerald-50 text-emerald-800 text-[10px] font-bold px-2 py-1 rounded-full border border-emerald-100 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Active Enrolled
+              </span>
+            </div>
+
+            {/* Stats Row */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-xs">
+                <span className="text-[10px] text-slate-500 font-bold uppercase">Attendance</span>
+                <p className="text-2xl font-black text-indigo-900">87%</p>
+                <div className="w-full bg-slate-100 h-1 rounded-full mt-2 overflow-hidden">
+                  <div className="bg-indigo-600 h-full rounded-full" style={{ width: '87%' }}></div>
+                </div>
+              </div>
+
+              <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-xs">
+                <span className="text-[10px] text-slate-500 font-bold uppercase">Rank</span>
+                <p className="text-2xl font-black text-amber-600">#4 <span className="text-xs font-normal text-slate-400">/ 35</span></p>
+                <span className="text-[9px] text-emerald-600 block mt-2">▲ 2 spots from last month</span>
+              </div>
+
+              <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-xs">
+                <span className="text-[10px] text-slate-500 font-bold uppercase">Tests Given</span>
+                <p className="text-2xl font-black text-indigo-900">12</p>
+                <span className="text-[9px] text-slate-400 block mt-2">Next: Physics (28th June)</span>
+              </div>
+
+              <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-xs">
+                <span className="text-[10px] text-slate-500 font-bold uppercase">Doubts Solved</span>
+                <p className="text-2xl font-black text-emerald-600">23</p>
+                <span className="text-[9px] text-indigo-600 block mt-2">AI Solved: 19</span>
+              </div>
+            </div>
+
+            {/* Quick Actions Grid */}
+            <div>
+              <h3 className="text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Quick Actions</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <button 
+                  onClick={() => handleTabChange('lectures')}
+                  className="bg-red-50 hover:bg-red-100 text-red-900 p-3 rounded-xl border border-red-100 text-xs font-bold flex flex-col items-center gap-1 transition-all"
+                >
+                  <span className="relative flex h-2 w-2 mb-1">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                  </span>
+                  Join Live Class
+                </button>
+                <button 
+                  onClick={() => handleTabChange('notes')}
+                  className="bg-indigo-50 hover:bg-indigo-100 text-indigo-900 p-3 rounded-xl border border-indigo-100 text-xs font-bold flex flex-col items-center gap-1 transition-all"
+                >
+                  <span>📝</span>
+                  View Notes
+                </button>
+                <button 
+                  onClick={() => handleTabChange('doubts')}
+                  className="bg-emerald-50 hover:bg-emerald-100 text-emerald-900 p-3 rounded-xl border border-emerald-100 text-xs font-bold flex flex-col items-center gap-1 transition-all"
+                >
+                  <span>🤖</span>
+                  Ask AI Doubt
+                </button>
+                <button 
+                  onClick={() => navigateTo('/marketplace')}
+                  className="bg-amber-50 hover:bg-amber-100 text-amber-900 p-3 rounded-xl border border-amber-100 text-xs font-bold flex flex-col items-center gap-1 transition-all"
+                >
+                  <span>🛍️</span>
+                  Buy Chapters
+                </button>
+              </div>
+            </div>
+
+            {/* Upcoming Tests Section */}
+            <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-xs">
+              <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-3">Upcoming Tests</h3>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                  <div>
+                    <span className="bg-amber-100 text-amber-800 text-[9px] font-bold px-1.5 py-0.5 rounded">Weekly Test</span>
+                    <h4 className="text-xs font-bold text-slate-800 mt-1">Physics: Optics Chapter 2</h4>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs font-bold text-indigo-600">28 Jun 2026</p>
+                    <span className="text-[9px] text-slate-400">Total: 50 Marks</span>
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                  <div>
+                    <span className="bg-indigo-100 text-indigo-800 text-[9px] font-bold px-1.5 py-0.5 rounded">Mock Exam</span>
+                    <h4 className="text-xs font-bold text-slate-800 mt-1">Maths: Quadratic Equations</h4>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs font-bold text-indigo-600">02 Jul 2026</p>
+                    <span className="text-[9px] text-slate-400">Total: 100 Marks</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ==================== LECTURES TAB ==================== */}
+        {activeTab === 'lectures' && (
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-base font-bold text-slate-900">Recorded & Live Lectures</h2>
+              {/* Filter */}
+              <select
+                value={activeSubjectFilter}
+                onChange={(e) => setActiveSubjectFilter(e.target.value)}
+                className="bg-white border border-slate-200 text-xs font-semibold px-2 py-1 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              >
+                <option value="All">All Subjects</option>
+                <option value="Mathematics">Mathematics</option>
+                <option value="Science">Science</option>
+                <option value="English">English</option>
+              </select>
+            </div>
+
+            {/* Live Now Alert */}
+            <div className="bg-rose-50 border border-rose-200 rounded-2xl p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="flex h-3 w-3 relative">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-500"></span>
+                </span>
+                <div>
+                  <span className="bg-rose-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-sm">LIVE NOW</span>
+                  <h4 className="text-xs font-bold text-slate-900 mt-1">Quadratic Equations - Practice Set 4</h4>
+                  <p className="text-[10px] text-slate-500">By Priya Kulkarni Ma'am</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => {
+                  setActiveVideoLecture({ title: 'Quadratic Equations Practice Set 4', teacher: 'Priya Ma\'am' });
+                  addToast('Joining Live Stream...', 'info');
+                }}
+                className="bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-all"
+              >
+                Join Now
+              </button>
+            </div>
+
+            {/* Video List */}
+            <div className="space-y-3">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Past Lectures Archive</span>
+              {LECTURES.filter(lec => activeSubjectFilter === 'All' || lec.subject === activeSubjectFilter).map((lec) => (
+                <div key={lec.id} className="bg-white p-3.5 rounded-2xl border border-slate-100 shadow-xs flex justify-between items-center hover:border-slate-200 transition-all">
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl mt-1">📹</span>
+                    <div>
+                      <span className="text-[9px] bg-slate-100 text-slate-600 font-bold px-1.5 py-0.5 rounded">{lec.subject}</span>
+                      <h4 className="text-xs font-bold text-slate-800 mt-1">{lec.title}</h4>
+                      <p className="text-[10px] text-slate-400">{lec.teacher} • {lec.duration}</p>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => {
+                      setActiveVideoLecture(lec);
+                      addToast('Loading Video Player...', 'info');
+                    }}
+                    className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 p-2 rounded-full transition-all"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ==================== NOTES TAB ==================== */}
+        {activeTab === 'notes' && (
+          <div className="space-y-4">
+            <h2 className="text-base font-bold text-slate-900">Study Materials & Notes</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {NOTES.map((n) => (
+                <div key={n.id} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-xs flex flex-col justify-between hover:border-slate-200 transition-all">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <span className="text-[9px] bg-indigo-50 text-indigo-800 font-bold px-1.5 py-0.5 rounded">{n.subject}</span>
+                      <h3 className="text-xs font-bold text-slate-800 mt-2 leading-snug">{n.title}</h3>
+                      <p className="text-[10px] text-slate-400 mt-1">By {n.teacher}</p>
+                    </div>
+                    <span className="text-rose-500 text-xl font-bold font-mono">PDF</span>
+                  </div>
+                  <div className="flex gap-2 mt-4 pt-3 border-t border-slate-50 justify-end">
+                    <button 
+                      onClick={() => setActiveNotePreview(n)}
+                      className="text-indigo-600 bg-indigo-50 hover:bg-indigo-100 font-bold text-[10px] px-2.5 py-1 rounded"
+                    >
+                      Quick Preview
+                    </button>
+                    <button 
+                      onClick={() => triggerDownload(n.title)}
+                      className="text-white bg-slate-950 hover:bg-slate-800 font-bold text-[10px] px-2.5 py-1 rounded flex items-center gap-1"
+                    >
+                      <span>📥</span> Download
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ==================== DOUBTS TAB ==================== */}
+        {activeTab === 'doubts' && (
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-xl overflow-hidden flex flex-col h-[520px]">
+            <div className="bg-indigo-900 text-white p-3 flex items-center gap-2">
+              <span className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse"></span>
+              <div>
+                <h3 className="text-xs font-bold">EduConnect AI Doubt Assistant</h3>
+                <span className="text-[9px] text-slate-300">Trained on local Maharashtra School Syllabus</span>
+              </div>
+            </div>
+
+            {/* Chat Body */}
+            <div className="flex-1 p-3 overflow-y-auto space-y-3 bg-slate-50 text-xs">
+              {doubtMessages.map((m, i) => {
+                const isAI = m.sender === 'ai';
+                return (
+                  <div key={i} className={`flex ${isAI ? 'justify-start' : 'justify-end'}`}>
+                    <div className={`max-w-[85%] p-3 rounded-2xl ${
+                      isAI ? 'bg-white border border-slate-100 text-slate-800' : 'bg-indigo-600 text-white'
+                    }`}>
+                      <p className="whitespace-pre-line leading-relaxed">{m.text}</p>
+                    </div>
+                  </div>
+                );
+              })}
+              {aiTyping && (
+                <div className="flex justify-start">
+                  <div className="bg-white border border-slate-100 p-2.5 rounded-2xl text-slate-400 flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"></span>
+                    <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce delay-100"></span>
+                    <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce delay-200"></span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Chat Footer Input */}
+            <div className="p-2 border-t border-slate-100 flex gap-2">
+              <input
+                type="text"
+                placeholder="Ask Physics, Chemistry, Math doubt..."
+                value={currentDoubtText}
+                onChange={(e) => setCurrentDoubtText(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') sendDoubt(); }}
+                className="flex-1 px-3 py-2 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              />
+              <button 
+                onClick={sendDoubt}
+                className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs py-2 px-3 rounded-xl transition-all"
+              >
+                Send
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ==================== PROFILE TAB ==================== */}
+        {activeTab === 'profile' && (
+          <div className="space-y-6">
+            <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-xs flex flex-col items-center text-center">
+              <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-extrabold text-2xl mb-3 border-2 border-indigo-200">
+                RP
+              </div>
+              <h3 className="font-bold text-slate-900 text-base">Rahul Deepak Patil</h3>
+              <p className="text-xs text-slate-400">Student ID: STU-001</p>
+              <span className="bg-indigo-50 text-indigo-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-indigo-100 mt-2">
+                10th Std • Batch B
+              </span>
+            </div>
+
+            {/* Performance Chart Card */}
+            <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-xs">
+              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4 text-center">Monthly Test Averages (%)</h3>
+              {/* Custom SVG Line Chart */}
+              <div className="w-full h-44 flex flex-col items-center">
+                <svg viewBox="0 0 300 120" className="w-full h-full">
+                  {/* Grid Lines */}
+                  <line x1="20" y1="20" x2="280" y2="20" stroke="#f1f5f9" strokeWidth="1" />
+                  <line x1="20" y1="50" x2="280" y2="50" stroke="#f1f5f9" strokeWidth="1" />
+                  <line x1="20" y1="80" x2="280" y2="80" stroke="#f1f5f9" strokeWidth="1" />
+                  <line x1="20" y1="100" x2="280" y2="100" stroke="#cbd5e1" strokeWidth="1.5" />
+
+                  {/* Line graph coordinates mapped out of 100 */}
+                  {/* Jan: 72, Feb: 78, Mar: 85, Apr: 80, May: 91, Jun: 88 */}
+                  <path
+                    d="M 30,85 L 80,75 L 130,60 L 180,68 L 230,40 L 270,48"
+                    fill="none"
+                    stroke="#4f46e5"
+                    strokeWidth="3.5"
+                    strokeLinecap="round"
+                  />
+
+                  {/* Points */}
+                  <circle cx="30" cy="85" r="4.5" fill="#4f46e5" stroke="#ffffff" strokeWidth="2" />
+                  <circle cx="80" cy="75" r="4.5" fill="#4f46e5" stroke="#ffffff" strokeWidth="2" />
+                  <circle cx="130" cy="60" r="4.5" fill="#4f46e5" stroke="#ffffff" strokeWidth="2" />
+                  <circle cx="180" cy="68" r="4.5" fill="#4f46e5" stroke="#ffffff" strokeWidth="2" />
+                  <circle cx="230" cy="40" r="4.5" fill="#10b981" stroke="#ffffff" strokeWidth="2" />
+                  <circle cx="270" cy="48" r="4.5" fill="#4f46e5" stroke="#ffffff" strokeWidth="2" />
+
+                  {/* Point Labels */}
+                  <text x="30" y="115" fontSize="8" textAnchor="middle" fill="#94a3b8">Jan</text>
+                  <text x="80" y="115" fontSize="8" textAnchor="middle" fill="#94a3b8">Feb</text>
+                  <text x="130" y="115" fontSize="8" textAnchor="middle" fill="#94a3b8">Mar</text>
+                  <text x="180" y="115" fontSize="8" textAnchor="middle" fill="#94a3b8">Apr</text>
+                  <text x="230" y="115" fontSize="8" textAnchor="middle" fill="#94a3b8">May</text>
+                  <text x="270" y="115" fontSize="8" textAnchor="middle" fill="#94a3b8">Jun</text>
+
+                  <text x="230" y="28" fontSize="8" fontWeight="bold" textAnchor="middle" fill="#10b981">Peak: 91%</text>
+                </svg>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* MOCK VIDEO PLAYER MODAL */}
+      {activeVideoLecture && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className="bg-slate-900 text-white rounded-3xl w-full max-w-md border border-slate-800 overflow-hidden shadow-2xl flex flex-col">
+            <div className="px-4 py-3 bg-slate-950 flex justify-between items-center border-b border-slate-800">
+              <span className="text-[10px] bg-red-600 text-white font-bold px-1.5 py-0.5 rounded-sm">SIMULATED PLAYER</span>
+              <button 
+                onClick={() => setActiveVideoLecture(null)}
+                className="text-xs text-slate-400 hover:text-white bg-slate-800 rounded-full w-6 h-6 flex items-center justify-center"
+              >
+                ✕
+              </button>
+            </div>
+            {/* Screen */}
+            <div className="aspect-video bg-black flex flex-col items-center justify-center p-4 relative group">
+              <span className="text-3xl animate-bounce">📺</span>
+              <p className="text-xs text-indigo-400 font-bold mt-2">{activeVideoLecture.title}</p>
+              <p className="text-[10px] text-slate-500">Instructor: {activeVideoLecture.teacher}</p>
+
+              {/* Progress/Seek Controls */}
+              <div className="absolute bottom-2 left-2 right-2 flex items-center gap-2 text-[9px] text-slate-400">
+                <span>02:14</span>
+                <div className="flex-1 bg-slate-700 h-1 rounded-full overflow-hidden">
+                  <div className="bg-indigo-500 h-full w-[35%]"></div>
+                </div>
+                <span>45:00</span>
+              </div>
+            </div>
+            {/* Interactive Live Chat Sim */}
+            <div className="p-3 bg-slate-950 flex-1 min-h-[120px] max-h-[180px] overflow-y-auto space-y-1">
+              <div className="text-[10px] text-emerald-400"><span className="font-bold">Rahul (You):</span> Priya Ma'am, should we write down this formula?</div>
+              <div className="text-[10px] text-slate-300"><span className="font-bold">Teacher Priya:</span> Yes Rahul, absolutely! Highly likely for Board exams.</div>
+              <div className="text-[10px] text-slate-400"><span className="font-bold">Priya Sharma:</span> Clear Ma'am!</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* QUICK PREVIEW NOTES MODAL */}
+      {activeNotePreview && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className="bg-white text-slate-800 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl flex flex-col border border-slate-100">
+            <div className="px-4 py-3 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+              <span className="text-[10px] bg-indigo-100 text-indigo-800 font-bold px-2 py-0.5 rounded">Mock PDF Viewer</span>
+              <button 
+                onClick={() => setActiveNotePreview(null)}
+                className="text-slate-400 hover:text-slate-700 bg-slate-200 rounded-full w-6 h-6 flex items-center justify-center"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-6 text-xs space-y-4 max-h-[300px] overflow-y-auto">
+              <h3 className="font-bold text-sm text-indigo-900 border-b pb-2">{activeNotePreview.title}</h3>
+              <p className="font-semibold text-slate-700">Section 1: Fundamental Formulae</p>
+              <p className="text-slate-500 leading-relaxed bg-slate-50 p-2 rounded-xl">
+                - Standard expression: ax² + bx + c = 0<br/>
+                - Nature of roots is determined by the discriminant (D) = b² - 4ac<br/>
+                - Case 1: D &gt; 0 implies two distinct real roots.<br/>
+                - Case 2: D = 0 implies equal real roots.
+              </p>
+              <p className="font-semibold text-slate-700">Section 2: Practice Set Answers</p>
+              <p className="text-slate-500 leading-relaxed bg-slate-50 p-2 rounded-xl">
+                Please attempt questions 1 through 10 from Chapter 3 prior to our live class tomorrow.
+              </p>
+            </div>
+            <div className="p-3 border-t border-slate-100 flex justify-end gap-2 bg-slate-50">
+              <button 
+                onClick={() => { triggerDownload(activeNotePreview.title); setActiveNotePreview(null); }}
+                className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-4 py-2 rounded-xl"
+              >
+                Download PDF
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Footer Bottom Navigation */}
+      <BottomNavigation
+        activeTab={activeTab}
+        tabs={studentTabs}
+        onTabChange={handleTabChange}
+      />
+    </div>
+  );
+}
+
+// ==========================================
+// 8. SCREEN 4: TEACHER DASHBOARD
+// ==========================================
+
+function TeacherDashboard({ tab }) {
+  const { navigateTo } = useContext(NavigationContext);
+  const { addToast } = useContext(ToastContext);
+
+  const [activeTab, setActiveTab] = useState(tab || 'home');
+  
+  // States for interactive teacher tools
+  const [selectedUploadType, setSelectedUploadType] = useState('notes');
+  const [uploadSubject, setUploadSubject] = useState('Mathematics');
+  const [uploadTopic, setUploadTopic] = useState('');
+  const [uploadFile, setUploadFile] = useState('');
+  
+  const [activeBatch, setActiveBatch] = useState('BATCH_B');
+  const [attendanceDate, setAttendanceDate] = useState('2026-06-24');
+  const [attendanceRecords, setAttendanceRecords] = useState(
+    STUDENTS.map(s => ({ id: s.id, name: s.name, present: true }))
+  );
+
+  useEffect(() => {
+    setActiveTab(tab);
+  }, [tab]);
+
+  const handleTabChange = (newTab) => {
+    setActiveTab(newTab);
+    navigateTo(`/teacher/${newTab === 'home' ? 'dashboard' : newTab}`);
+  };
+
+  const handleAttendanceToggle = (id) => {
+    setAttendanceRecords(records => 
+      records.map(r => r.id === id ? { ...r, present: !r.present } : r)
+    );
+  };
+
+  const markAllAttendance = (status) => {
+    setAttendanceRecords(records => records.map(r => ({ ...r, present: status })));
+    addToast(status ? 'Marked all Present' : 'Marked all Absent', 'info');
+  };
+
+  const handleUploadSubmit = (e) => {
+    e.preventDefault();
+    if (!uploadTopic || !uploadFile) {
+      addToast('Please input Topic and upload a mock file!', 'error');
+      return;
+    }
+    addToast('Content uploaded and synced successfully!', 'success');
+    setUploadTopic('');
+    setUploadFile('');
+  };
+
+  const teacherTabs = [
+    { id: 'home', label: 'Home', icon: <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg> },
+    { id: 'upload', label: 'Upload', icon: <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg> },
+    { id: 'attendance', label: 'Attendance', icon: <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg> },
+    { id: 'schedule', label: 'Schedule', icon: <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg> },
+    { id: 'payments', label: 'Earnings', icon: <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> },
+  ];
+
+  return (
+    <div className="flex-1 flex flex-col justify-between h-full bg-slate-50">
+      <Header title="Teacher Panel" />
+
+      {/* Content Area */}
+      <div className="flex-1 p-4 overflow-y-auto max-w-3xl mx-auto w-full">
+        
+        {/* ==================== HOME TAB ==================== */}
+        {activeTab === 'home' && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <div>
+                <h2 className="text-xl font-bold text-slate-900">Good Morning, Priya Ma'am! 🙏</h2>
+                <span className="text-xs text-slate-500">Instructor: Mathematics</span>
+              </div>
+              <span className="bg-emerald-50 text-emerald-800 text-[10px] font-bold px-2 py-1 rounded-full border border-emerald-100 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Active Enrolled
+              </span>
+            </div>
+
+            {/* Stats Row */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-xs">
+                <span className="text-[10px] text-slate-500 font-bold uppercase">Classes Today</span>
+                <p className="text-2xl font-black text-indigo-900">3 Batches</p>
+                <span className="text-[9px] text-slate-400 block mt-2">Next: Batch B at 4:00 PM</span>
+              </div>
+
+              <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-xs">
+                <span className="text-[10px] text-slate-500 font-bold uppercase">Total Students Enrolled</span>
+                <p className="text-2xl font-black text-emerald-600">142</p>
+                <span className="text-[9px] text-indigo-600 block mt-2">Class avg attendance: 88%</span>
+              </div>
+
+              <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-xs">
+                <span className="text-[10px] text-slate-500 font-bold uppercase">Pending Payments</span>
+                <p className="text-2xl font-black text-rose-600">₹4,200</p>
+                <span className="text-[9px] text-slate-400 block mt-2">Due from Batch A</span>
+              </div>
+
+              <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-xs">
+                <span className="text-[10px] text-slate-500 font-bold uppercase">Lectures Uploaded</span>
+                <p className="text-2xl font-black text-indigo-900">34</p>
+                <span className="text-[9px] text-slate-400 block mt-2">Storage used: 45 GB</span>
+              </div>
+            </div>
+
+            {/* Quick Actions Grid */}
+            <div>
+              <h3 className="text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Teacher Quick Tools</h3>
+              <div className="grid grid-cols-2 gap-2">
+                <button 
+                  onClick={() => {
+                    addToast('Starting Instant Live Stream Room...', 'info');
+                    navigateTo('/student/lectures'); // Jump to standard video preview
+                  }}
+                  className="bg-indigo-600 hover:bg-indigo-500 text-white p-3.5 rounded-2xl border border-indigo-700 text-xs font-bold flex flex-col items-center gap-1 transition-all"
+                >
+                  <span>📺</span>
+                  Start Live Class
+                </button>
+                <button 
+                  onClick={() => handleTabChange('upload')}
+                  className="bg-white hover:bg-slate-50 text-slate-800 p-3.5 rounded-2xl border border-slate-200 text-xs font-bold flex flex-col items-center gap-1 transition-all"
+                >
+                  <span>📤</span>
+                  Upload Notes/Lectures
+                </button>
+              </div>
+            </div>
+
+            {/* Live Today's Schedule */}
+            <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-xs">
+              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Today's Timetable</h3>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center bg-indigo-50/50 p-2.5 rounded-xl border border-indigo-100">
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-800">Batch A (10th Std)</h4>
+                    <p className="text-[10px] text-slate-500">Algebra Core Solutions</p>
+                  </div>
+                  <span className="text-xs font-bold text-indigo-600">03:30 PM</span>
+                </div>
+
+                <div className="flex justify-between items-center bg-amber-50/50 p-2.5 rounded-xl border border-amber-100">
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-800">Batch B (11th Std - JEE)</h4>
+                    <p className="text-[10px] text-slate-500">Integrals Formulas</p>
+                  </div>
+                  <span className="text-xs font-bold text-amber-600">04:00 PM</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ==================== UPLOAD TAB ==================== */}
+        {activeTab === 'upload' && (
+          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xl space-y-4">
+            <h2 className="text-base font-bold text-slate-950">Upload Classroom Content</h2>
+            <form onSubmit={handleUploadSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-1">Select Upload Type</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {['notes', 'lecture', 'assignment'].map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => setSelectedUploadType(t)}
+                      className={`py-2 text-xs font-bold border rounded-xl capitalize transition-all ${
+                        selectedUploadType === t 
+                          ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs' 
+                          : 'bg-white text-slate-500 border-slate-200'
+                      }`}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-1">Subject</label>
+                <select
+                  value={uploadSubject}
+                  onChange={(e) => setUploadSubject(e.target.value)}
+                  className="w-full px-4 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none"
+                >
+                  <option value="Mathematics">Mathematics</option>
+                  <option value="Physics">Physics</option>
+                  <option value="Chemistry">Chemistry</option>
+                  <option value="Biology">Biology</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-1">Topic/Chapter Name</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Integrals Practice Worksheet"
+                  value={uploadTopic}
+                  onChange={(e) => setUploadTopic(e.target.value)}
+                  className="w-full px-4 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-1">Select File</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="No file chosen"
+                    value={uploadFile}
+                    readOnly
+                    className="flex-1 px-4 py-2 text-xs border border-slate-200 rounded-xl bg-slate-50"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUploadFile('LectureNotes_Revision03.pdf');
+                      addToast('Mock file attached!', 'info');
+                    }}
+                    className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs px-4 py-2 rounded-xl border border-indigo-100 shrink-0"
+                  >
+                    Browse File
+                  </button>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 rounded-xl text-xs shadow-md shadow-indigo-600/10 transition-all"
+              >
+                Publish Material to Students
+              </button>
+            </form>
+          </div>
+        )}
+
+        {/* ==================== ATTENDANCE TAB ==================== */}
+        {activeTab === 'attendance' && (
+          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xl space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-base font-bold text-slate-950">Roll Call</h2>
+              <span className="text-[10px] bg-slate-100 text-slate-500 font-bold px-2 py-0.5 rounded">Digital Record</span>
+            </div>
+
+            {/* Quick config */}
+            <div className="grid grid-cols-2 gap-3 bg-slate-50 p-3 rounded-2xl border border-slate-100 text-xs">
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase">Target Batch</label>
+                <select
+                  value={activeBatch}
+                  onChange={(e) => setActiveBatch(e.target.value)}
+                  className="bg-white border border-slate-200 p-1 rounded font-semibold focus:outline-none mt-1 w-full"
+                >
+                  <option value="BATCH_A">Batch A (10th Std)</option>
+                  <option value="BATCH_B">Batch B (11th Std)</option>
+                  <option value="BATCH_C">Batch C (12th Std)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase">Date</label>
+                <input
+                  type="date"
+                  value={attendanceDate}
+                  onChange={(e) => setAttendanceDate(e.target.value)}
+                  className="bg-white border border-slate-200 p-1 rounded font-semibold focus:outline-none mt-1 w-full"
+                />
+              </div>
+            </div>
+
+            {/* Bulk Actions */}
+            <div className="flex gap-2">
+              <button 
+                onClick={() => markAllAttendance(true)}
+                className="text-[10px] bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold py-1.5 px-3 rounded-xl border border-emerald-100 flex-1"
+              >
+                Mark All Present
+              </button>
+              <button 
+                onClick={() => markAllAttendance(false)}
+                className="text-[10px] bg-rose-50 hover:bg-rose-100 text-rose-800 font-bold py-1.5 px-3 rounded-xl border border-rose-100 flex-1"
+              >
+                Mark All Absent
+              </button>
+            </div>
+
+            {/* Students roster list */}
+            <div className="space-y-2 max-h-[300px] overflow-y-auto">
+              {attendanceRecords.map((r) => (
+                <div key={r.id} className="flex justify-between items-center bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-xs">
+                  <div>
+                    <h4 className="font-bold text-slate-800">{r.name}</h4>
+                    <span className="text-[9px] text-slate-400">{r.id}</span>
+                  </div>
+                  <button
+                    onClick={() => handleAttendanceToggle(r.id)}
+                    className={`font-extrabold px-4 py-1.5 rounded-xl text-[10px] transition-all ${
+                      r.present 
+                        ? 'bg-emerald-600 text-white' 
+                        : 'bg-rose-600 text-white'
+                    }`}
+                  >
+                    {r.present ? 'PRESENT' : 'ABSENT'}
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={() => addToast('Attendance submitted and SMS alerts sent to Parents!', 'success')}
+              className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 rounded-xl text-xs transition-all"
+            >
+              Sync & Submit Attendance Sheet
+            </button>
+          </div>
+        )}
+
+        {/* ==================== SCHEDULE TAB ==================== */}
+        {activeTab === 'schedule' && (
+          <div className="space-y-4">
+            <h2 className="text-base font-bold text-slate-900">Your Weekly Grid</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {SCHEDULE_ITEMS.map((dayData, i) => (
+                <div key={i} className="bg-white p-3 rounded-2xl border border-slate-100 shadow-xs space-y-2">
+                  <span className="font-bold text-indigo-700 text-xs">{dayData.day}</span>
+                  <div className="space-y-1">
+                    {dayData.items.map((it, idx) => (
+                      <div key={idx} className="bg-slate-50 p-1 rounded text-[9px] border border-slate-100">
+                        <p className="font-bold text-slate-700">{it.sub} - {it.batch}</p>
+                        <span className="text-slate-400">{it.time}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ==================== PAYMENTS TAB ==================== */}
+        {activeTab === 'payments' && (
+          <div className="space-y-6">
+            <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xl space-y-4">
+              <h2 className="text-base font-bold text-slate-900 text-center">Earnings Summary</h2>
+              
+              {/* Simple Custom Bar Chart SVG */}
+              <div className="h-44 flex items-center justify-center">
+                <svg viewBox="0 0 300 120" className="w-full h-full">
+                  <line x1="20" y1="100" x2="280" y2="100" stroke="#cbd5e1" strokeWidth="1.5" />
+                  
+                  {/* Bars representing simulated payouts: Jan-Jun */}
+                  {/* Jan: 40k, Feb: 45k, Mar: 55k, Apr: 50k, May: 65k, Jun: 60k */}
+                  <rect x="35" y="60" width="18" height="40" fill="#4f46e5" rx="2" />
+                  <rect x="75" y="55" width="18" height="45" fill="#4f46e5" rx="2" />
+                  <rect x="115" y="45" width="18" height="55" fill="#4f46e5" rx="2" />
+                  <rect x="155" y="50" width="18" height="50" fill="#4f46e5" rx="2" />
+                  <rect x="195" y="35" width="18" height="65" fill="#10b981" rx="2" />
+                  <rect x="235" y="40" width="18" height="60" fill="#4f46e5" rx="2" />
+
+                  {/* Labels */}
+                  <text x="44" y="112" fontSize="8" textAnchor="middle" fill="#94a3b8">Jan</text>
+                  <text x="84" y="112" fontSize="8" textAnchor="middle" fill="#94a3b8">Feb</text>
+                  <text x="124" y="112" fontSize="8" textAnchor="middle" fill="#94a3b8">Mar</text>
+                  <text x="164" y="112" fontSize="8" textAnchor="middle" fill="#94a3b8">Apr</text>
+                  <text x="204" y="112" fontSize="8" textAnchor="middle" fill="#94a3b8">May</text>
+                  <text x="244" y="112" fontSize="8" textAnchor="middle" fill="#94a3b8">Jun</text>
+
+                  <text x="204" y="28" fontSize="8" fontWeight="bold" textAnchor="middle" fill="#10b981">Peak: ₹65,000</text>
+                </svg>
+              </div>
+
+              {/* Breakdown List */}
+              <div className="space-y-2">
+                <span className="text-[10px] font-bold text-slate-500 uppercase block">Recent Invoiced Batches</span>
+                <div className="flex justify-between items-center bg-slate-50 p-3 rounded-xl border border-slate-100 text-xs">
+                  <div>
+                    <h4 className="font-bold text-slate-800">Batch B (Monthly Payout)</h4>
+                    <p className="text-[10px] text-slate-400">Paid out via UPI Transfer</p>
+                  </div>
+                  <span className="font-extrabold text-emerald-600">₹24,500</span>
+                </div>
+                <div className="flex justify-between items-center bg-slate-50 p-3 rounded-xl border border-slate-100 text-xs">
+                  <div>
+                    <h4 className="font-bold text-slate-800">Chapter Market Royalties</h4>
+                    <p className="text-[10px] text-slate-400">Total 49 chapter downloads</p>
+                  </div>
+                  <span className="font-extrabold text-emerald-600">₹4,900</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+      </div>
+
+      <BottomNavigation
+        activeTab={activeTab}
+        tabs={teacherTabs}
+        onTabChange={handleTabChange}
+      />
+    </div>
+  );
+}
+
+// ==========================================
+// 9. SCREEN 5: MANAGEMENT DASHBOARD
+// ==========================================
+
+function ManagementDashboard({ tab }) {
+  const { navigateTo } = useContext(NavigationContext);
+  const { addToast } = useContext(ToastContext);
+
+  const [activeTab, setActiveTab] = useState(tab || 'home');
+  const [aiLoading, setAiLoading] = useState(false);
+  const [scheduleGenerated, setScheduleGenerated] = useState(false);
+  const [feeFilter, setFeeFilter] = useState('All');
+
+  const [studentsList, setStudentsList] = useState([
+    { name: 'Rahul Patil', batch: 'Batch B', amount: '₹12,000', status: 'Paid', date: '12-Jun-2026' },
+    { name: 'Priya Sharma', batch: 'Batch B', amount: '₹12,000', status: 'Pending', date: '01-Jul-2026' },
+    { name: 'Arjun Deshmukh', batch: 'Batch A', amount: '₹10,000', status: 'Overdue', date: '15-May-2026' },
+    { name: 'Sneha Kulkarni', batch: 'Batch C', amount: '₹15,000', status: 'Paid', date: '18-Jun-2026' },
+  ]);
+
+  useEffect(() => {
+    setActiveTab(tab);
+  }, [tab]);
+
+  const handleTabChange = (newTab) => {
+    setActiveTab(newTab);
+    navigateTo(`/management/${newTab === 'home' ? 'dashboard' : newTab}`);
+  };
+
+  const handleGenerateAISchedule = () => {
+    setAiLoading(true);
+    setTimeout(() => {
+      setAiLoading(false);
+      setScheduleGenerated(true);
+      addToast('AI Scheduler completed! 0 clashes detected.', 'success');
+    }, 2000);
+  };
+
+  const sendReminder = (name) => {
+    addToast(`SMS fee reminder sent to Parent of ${name}!`, 'success');
+  };
+
+  const adminTabs = [
+    { id: 'home', label: 'Home', icon: <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg> },
+    { id: 'scheduler', label: 'AI Scheduler', icon: <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg> },
+    { id: 'fees', label: 'Fees', icon: <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg> },
+    { id: 'analytics', label: 'Analytics', icon: <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2z"/></svg> },
+    { id: 'settings', label: 'Settings', icon: <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/></svg> },
+  ];
+
+  return (
+    <div className="flex-1 flex flex-col justify-between h-full bg-slate-50">
+      <Header title="EduConnect Admin Control" />
+
+      {/* Content Container */}
+      <div className="flex-1 p-4 overflow-y-auto max-w-3xl mx-auto w-full">
+        
+        {/* ==================== HOME TAB ==================== */}
+        {activeTab === 'home' && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-slate-900">Admin Command Room ⚙️</h2>
+                <span className="text-xs text-slate-500">Live Infrastructure Analytics</span>
+              </div>
+            </div>
+
+            {/* Stats Dashboard */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-xs">
+                <span className="text-[10px] text-slate-500 font-bold uppercase">Active Students</span>
+                <p className="text-2xl font-black text-indigo-900">342</p>
+                <span className="text-[9px] text-emerald-600 block mt-2">▲ 15 admissions this week</span>
+              </div>
+
+              <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-xs">
+                <span className="text-[10px] text-slate-500 font-bold uppercase">Staff & Teachers</span>
+                <p className="text-2xl font-black text-indigo-900">18</p>
+                <span className="text-[9px] text-slate-400 block mt-2">3 pending applications</span>
+              </div>
+
+              <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-xs">
+                <span className="text-[10px] text-slate-500 font-bold uppercase">Gross Monthly Revenue</span>
+                <p className="text-2xl font-black text-emerald-600">₹1,24,500</p>
+                <span className="text-[9px] text-slate-400 block mt-2">Target: ₹1,50,000</span>
+              </div>
+
+              <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-xs">
+                <span className="text-[10px] text-slate-500 font-bold uppercase">Active Batches</span>
+                <p className="text-2xl font-black text-amber-600">12</p>
+                <span className="text-[9px] text-slate-400 block mt-2">Using 4 lecture halls</span>
+              </div>
+            </div>
+
+            {/* Quick action buttons */}
+            <div>
+              <span className="text-[10px] font-bold text-slate-500 uppercase block mb-2">Operations Panel</span>
+              <div className="grid grid-cols-2 gap-2">
+                <button onClick={() => addToast('Add Teacher Panel coming soon!', 'info')} className="bg-slate-900 hover:bg-slate-800 text-white font-bold p-3 rounded-2xl text-xs flex flex-col items-center gap-1">
+                  <span>➕ Staff</span> Add Teacher
+                </button>
+                <button onClick={() => addToast('Add Batch Panel coming soon!', 'info')} className="bg-white hover:bg-slate-50 text-slate-800 font-bold p-3 rounded-2xl text-xs border border-slate-200 flex flex-col items-center gap-1">
+                  <span>➕ Class</span> Add Batch
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ==================== AI SCHEDULER TAB ==================== */}
+        {activeTab === 'scheduler' && (
+          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xl space-y-4">
+            <h2 className="text-base font-bold text-slate-900">AI Schedule Engine</h2>
+            <p className="text-xs text-slate-500">
+              Generates optimal, collision-free weekly calendars matching classroom capacities, teacher availabilities, and parent feedback schedules.
+            </p>
+
+            {aiLoading ? (
+              <div className="py-12 flex flex-col items-center justify-center gap-3">
+                <span className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></span>
+                <p className="text-xs text-slate-500 font-bold">AI Optimizing Classroom Matrices...</p>
+              </div>
+            ) : scheduleGenerated ? (
+              <div className="space-y-4">
+                <div className="bg-emerald-50 border border-emerald-100 p-3 rounded-2xl flex items-center justify-between text-xs text-emerald-800">
+                  <span>✔ AI Schedule Compiled successfully. No collisions detected.</span>
+                  <button onClick={() => setScheduleGenerated(false)} className="underline font-bold">Reset</button>
+                </div>
+                {/* Simulated Generated Timetable Summary */}
+                <div className="border border-slate-100 rounded-2xl overflow-hidden text-xs">
+                  <div className="bg-slate-900 text-white p-2.5 font-bold flex justify-between">
+                    <span>Batch</span>
+                    <span>Teacher / Subject</span>
+                    <span>Room / Time</span>
+                  </div>
+                  <div className="divide-y divide-slate-100 bg-slate-50">
+                    <div className="p-2.5 flex justify-between">
+                      <span className="font-bold">10th Std (Batch A)</span>
+                      <span>Patil Sir (Physics)</span>
+                      <span className="text-indigo-600">Room 1 • 03:30 PM</span>
+                    </div>
+                    <div className="p-2.5 flex justify-between">
+                      <span className="font-bold">11th Std (Batch B)</span>
+                      <span>Priya Ma'am (Math)</span>
+                      <span className="text-indigo-600">Room 2 • 04:00 PM</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={handleGenerateAISchedule}
+                className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-2xl text-xs shadow-md shadow-indigo-600/10 transition-all flex items-center justify-center gap-2"
+              >
+                <span>🪄</span> Auto-Generate Weekly Grid
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* ==================== FEES TAB ==================== */}
+        {activeTab === 'fees' && (
+          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xl space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-base font-bold text-slate-900">Student Tuition Records</h2>
+              <select
+                value={feeFilter}
+                onChange={(e) => setFeeFilter(e.target.value)}
+                className="bg-slate-50 border border-slate-200 p-1 rounded text-xs focus:outline-none"
+              >
+                <option value="All">All Fees</option>
+                <option value="Paid">Paid</option>
+                <option value="Pending">Pending</option>
+                <option value="Overdue">Overdue</option>
+              </select>
+            </div>
+
+            <div className="space-y-2.5 max-h-[350px] overflow-y-auto">
+              {studentsList.filter(s => feeFilter === 'All' || s.status === feeFilter).map((s, i) => (
+                <div key={i} className="bg-slate-50 p-3 rounded-2xl border border-slate-100 text-xs flex justify-between items-center">
+                  <div>
+                    <h4 className="font-bold text-slate-800">{s.name}</h4>
+                    <span className="text-[10px] text-slate-400">{s.batch} • Due: {s.date}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${
+                      s.status === 'Paid' ? 'bg-emerald-100 text-emerald-800' :
+                      s.status === 'Pending' ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800'
+                    }`}>
+                      {s.status} ({s.amount})
+                    </span>
+                    {s.status !== 'Paid' && (
+                      <button 
+                        onClick={() => sendReminder(s.name)}
+                        className="bg-slate-900 text-white hover:bg-slate-800 text-[10px] font-bold px-2 py-1 rounded-xl shrink-0"
+                      >
+                        Remind
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ==================== ANALYTICS TAB ==================== */}
+        {activeTab === 'analytics' && (
+          <div className="space-y-6">
+            <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xl space-y-4">
+              <h2 className="text-base font-bold text-slate-950 text-center">Coaching Growth Charts</h2>
+              
+              <div className="h-44 flex items-center justify-center">
+                {/* SVG Revenue analytics chart */}
+                <svg viewBox="0 0 300 120" className="w-full h-full">
+                  <line x1="20" y1="100" x2="280" y2="100" stroke="#cbd5e1" strokeWidth="1.5" />
+                  {/* Performance Area */}
+                  <path
+                    d="M 20,90 Q 70,80 120,60 T 220,30 T 280,10"
+                    fill="none"
+                    stroke="#4f46e5"
+                    strokeWidth="3.5"
+                  />
+                  <circle cx="120" cy="60" r="4" fill="#4f46e5" />
+                  <circle cx="220" cy="30" r="4" fill="#4f46e5" />
+                  <circle cx="280" cy="10" r="4" fill="#10b981" />
+                  
+                  {/* labels */}
+                  <text x="120" y="75" fontSize="8" textAnchor="middle" fill="#94a3b8">Q1 Revenue</text>
+                  <text x="220" y="45" fontSize="8" textAnchor="middle" fill="#94a3b8">Q2 Revenue</text>
+                  <text x="280" y="25" fontSize="8" fontWeight="bold" textAnchor="middle" fill="#10b981">Current: ₹1.2L</text>
+                </svg>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ==================== SETTINGS TAB ==================== */}
+        {activeTab === 'settings' && (
+          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xl space-y-4 text-xs">
+            <h2 className="text-base font-bold text-slate-900">Institution Configuration</h2>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase">Classroom Name</label>
+                <input type="text" defaultValue="EduConnect Super Academy" className="w-full border border-slate-200 p-2 rounded-xl focus:outline-none mt-1 font-semibold" />
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase">Contact Address</label>
+                <input type="text" defaultValue="Shivajinagar, Metro Station Area, Pune" className="w-full border border-slate-200 p-2 rounded-xl focus:outline-none mt-1 font-semibold" />
+              </div>
+              <button 
+                onClick={() => addToast('Class details saved successfully.', 'success')}
+                className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 rounded-xl text-xs"
+              >
+                Save Changes
+              </button>
+            </div>
+          </div>
+        )}
+
+      </div>
+
+      <BottomNavigation
+        activeTab={activeTab}
+        tabs={adminTabs}
+        onTabChange={handleTabChange}
+      />
+    </div>
+  );
+}
+
+// ==========================================
+// 10. SCREEN 6: PARENT DASHBOARD
+// ==========================================
+
+function ParentDashboard({ tab }) {
+  const { navigateTo } = useContext(NavigationContext);
+  const { addToast } = useContext(ToastContext);
+
+  const [activeTab, setActiveTab] = useState(tab || 'home');
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+
+  useEffect(() => {
+    setActiveTab(tab);
+  }, [tab]);
+
+  const handleTabChange = (newTab) => {
+    setActiveTab(newTab);
+    navigateTo(`/parent/${newTab === 'home' ? 'dashboard' : newTab}`);
+  };
+
+  const parentTabs = [
+    { id: 'home', label: 'Home', icon: <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg> },
+    { id: 'progress', label: 'Progress', icon: <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2z"/></svg> },
+    { id: 'attendance', label: 'Attendance', icon: <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg> },
+    { id: 'fees', label: 'Fees Status', icon: <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg> },
+    { id: 'feedback', label: 'Feedback', icon: <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg> },
+  ];
+
+  return (
+    <div className="flex-1 flex flex-col justify-between h-full bg-slate-50">
+      <Header title="Parent Portal" />
+
+      {/* Main Panel Content */}
+      <div className="flex-1 p-4 overflow-y-auto max-w-3xl mx-auto w-full">
+        
+        {/* ==================== HOME TAB ==================== */}
+        {activeTab === 'home' && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-slate-900">Namaste, Mr. Patil! 🙏</h2>
+                <span className="text-xs text-slate-500">Child: Rahul Patil • 10th Std (Batch B)</span>
+              </div>
+            </div>
+
+            {/* Child Info Card */}
+            <div className="bg-indigo-900 text-white p-5 rounded-3xl relative overflow-hidden shadow-xl">
+              <span className="text-[10px] bg-indigo-800 text-indigo-200 font-bold px-2.5 py-1 rounded-full border border-indigo-700">
+                ACTIVE MONITORING MODE
+              </span>
+              <h3 className="text-lg font-bold mt-4">Rahul Patil</h3>
+              <p className="text-xs text-slate-300">EduConnect ID: STU-001</p>
+              
+              {/* Stat rows */}
+              <div className="grid grid-cols-2 gap-4 mt-6 pt-4 border-t border-indigo-800/60 text-xs">
+                <div>
+                  <span className="text-slate-400 block">Attendance</span>
+                  <p className="text-base font-bold text-emerald-400">87% (Satisfactory)</p>
+                </div>
+                <div>
+                  <span className="text-slate-400 block">Last Test Average</span>
+                  <p className="text-base font-bold text-indigo-300">88 / 100 Marks</p>
+                </div>
+              </div>
+            </div>
+
+            {/* AI Insights Block */}
+            <div className="bg-amber-50 border border-amber-200 p-4 rounded-2xl">
+              <h4 className="text-xs font-bold text-amber-800 uppercase tracking-wider flex items-center gap-1.5">
+                <span>🪄</span> AI Diagnostic Insight
+              </h4>
+              <p className="text-xs text-amber-900 leading-relaxed mt-2">
+                Rahul is performing exceptionally in <strong>Physics Ray Diagrams</strong>, but shows a slight drop of 4% in <strong>Algebra Matrices</strong>. Suggest 20 minutes daily practice.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* ==================== PROGRESS TAB ==================== */}
+        {activeTab === 'progress' && (
+          <div className="space-y-4">
+            <h2 className="text-base font-bold text-slate-900">Academic Score Progression</h2>
+            <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-xs space-y-4">
+              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Score Trend Chart</h3>
+              
+              <div className="h-44 flex items-center justify-center">
+                {/* Score Chart */}
+                <svg viewBox="0 0 300 120" className="w-full h-full">
+                  <line x1="20" y1="100" x2="280" y2="100" stroke="#cbd5e1" strokeWidth="1.5" />
+                  <path
+                    d="M 30,85 L 80,75 L 130,60 L 180,68 L 230,40 L 270,48"
+                    fill="none"
+                    stroke="#4f46e5"
+                    strokeWidth="3.5"
+                  />
+                  <circle cx="230" cy="40" r="4" fill="#10b981" />
+                  <text x="230" y="25" fontSize="8" fontWeight="bold" textAnchor="middle" fill="#10b981">91% Grade</text>
+                  
+                  {/* labels */}
+                  <text x="30" y="112" fontSize="8" fill="#94a3b8">Jan</text>
+                  <text x="130" y="112" fontSize="8" fill="#94a3b8">Mar</text>
+                  <text x="270" y="112" fontSize="8" fill="#94a3b8">Jun</text>
+                </svg>
+              </div>
+
+              {/* Weak Topic Badges */}
+              <div className="space-y-2">
+                <span className="text-[10px] font-bold text-slate-500 uppercase block">Weak concepts highlighted by Teachers</span>
+                <div className="flex gap-2">
+                  <span className="bg-rose-100 text-rose-800 text-[10px] font-bold px-2.5 py-1 rounded-full">Quadratic Matrix Division</span>
+                  <span className="bg-rose-100 text-rose-800 text-[10px] font-bold px-2.5 py-1 rounded-full">Optics Convex Focus</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ==================== ATTENDANCE TAB ==================== */}
+        {activeTab === 'attendance' && (
+          <div className="space-y-4">
+            <h2 className="text-base font-bold text-slate-900">Attendance Calendar</h2>
+            <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-xs space-y-4">
+              <div className="flex justify-between text-xs text-slate-500">
+                <span>Present days: <strong className="text-emerald-600">22</strong></span>
+                <span>Absent days: <strong className="text-rose-600">4</strong></span>
+              </div>
+              
+              {/* Simulated visual grid representing days of month */}
+              <div className="grid grid-cols-7 gap-1.5 text-center text-xs">
+                {Array.from({ length: 28 }).map((_, i) => {
+                  const isAbsent = i === 12 || i === 19 || i === 24;
+                  return (
+                    <div 
+                      key={i} 
+                      className={`p-2 rounded-lg font-bold text-[10px] ${
+                        isAbsent 
+                          ? 'bg-rose-100 text-rose-800 border border-rose-200' 
+                          : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                      }`}
+                    >
+                      {i + 1}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ==================== FEES TAB ==================== */}
+        {activeTab === 'fees' && (
+          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xl space-y-4">
+            <h2 className="text-base font-bold text-slate-900">Outstanding Coaching Dues</h2>
+            
+            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex justify-between items-center text-xs">
+              <div>
+                <h4 className="font-bold text-slate-800">Q2 Coaching Term Fee</h4>
+                <p className="text-[10px] text-slate-400">Due Date: 15-Jul-2026</p>
+              </div>
+              <p className="font-black text-indigo-900 text-sm">₹12,000</p>
+            </div>
+
+            <button 
+              onClick={() => setShowPaymentModal(true)}
+              className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-2xl text-xs shadow-md shadow-indigo-600/10 transition-all"
+            >
+              Pay Now (Instant UPI/Card)
+            </button>
+          </div>
+        )}
+
+        {/* ==================== FEEDBACK TAB ==================== */}
+        {activeTab === 'feedback' && (
+          <div className="space-y-4">
+            <h2 className="text-base font-bold text-slate-900">Direct Teacher Feedback Logs</h2>
+            <div className="space-y-3">
+              <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-xs text-xs space-y-2">
+                <div className="flex justify-between items-center border-b pb-2">
+                  <h4 className="font-bold text-indigo-900">Priya Kulkarni Ma'am (Math)</h4>
+                  <span className="text-[10px] text-slate-400">22 Jun 2026</span>
+                </div>
+                <p className="text-slate-600 leading-relaxed">
+                  "Rahul is overall very regular and has great logic. But he must review quadratic identities before attempting exams to score full marks."
+                </p>
+              </div>
+
+              <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-xs text-xs space-y-2">
+                <div className="flex justify-between items-center border-b pb-2">
+                  <h4 className="font-bold text-indigo-900">Patil Sir (Physics)</h4>
+                  <span className="text-[10px] text-slate-400">18 Jun 2026</span>
+                </div>
+                <p className="text-slate-600 leading-relaxed">
+                  "Outstanding attention to detail during practical sessions. Homework is submitted on-time."
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+      </div>
+
+      {/* MOCK UPI PAYMENT MODAL */}
+      {showPaymentModal && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className="bg-white text-slate-800 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl flex flex-col border border-slate-100">
+            <div className="px-4 py-3 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+              <span className="text-[10px] bg-indigo-100 text-indigo-800 font-bold px-2 py-0.5 rounded">Simulated UPI Merchant Gateway</span>
+              <button onClick={() => setShowPaymentModal(false)} className="text-slate-400 hover:text-slate-700 bg-slate-200 rounded-full w-6 h-6 flex items-center justify-center">✕</button>
+            </div>
+            <div className="p-6 text-center space-y-4">
+              <span className="text-3xl">🛡️</span>
+              <h3 className="font-black text-slate-900 text-sm">Paying EduConnect Academy</h3>
+              <p className="text-2xl font-black text-indigo-900">₹12,000</p>
+              <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 space-y-2 text-left">
+                <button 
+                  onClick={() => {
+                    addToast('Payment authorization successful!', 'success');
+                    setShowPaymentModal(false);
+                  }}
+                  className="w-full text-left p-2.5 hover:bg-slate-100 rounded-xl flex items-center justify-between text-xs font-bold text-slate-700"
+                >
+                  <span>📱 GooglePay / PhonePe UPI</span>
+                  <span>➡️</span>
+                </button>
+                <button 
+                  onClick={() => {
+                    addToast('Payment authorization successful!', 'success');
+                    setShowPaymentModal(false);
+                  }}
+                  className="w-full text-left p-2.5 hover:bg-slate-100 rounded-xl flex items-center justify-between text-xs font-bold text-slate-700"
+                >
+                  <span>💳 Net Banking / Credit Card</span>
+                  <span>➡️</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <BottomNavigation
+        activeTab={activeTab}
+        tabs={parentTabs}
+        onTabChange={handleTabChange}
+      />
+    </div>
+  );
+}
+
+// ==========================================
+// 11. SCREEN 7: MARKETPLACE MODULE
+// ==========================================
+
+function MarketplaceLayout({ view }) {
+  const { navigateTo } = useContext(NavigationContext);
+  const { addToast } = useContext(ToastContext);
+
+  const [currentView, setCurrentView] = useState(view || 'tuition');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedTeacherForBooking, setSelectedTeacherForBooking] = useState(null);
+  const [bookingConfirmed, setBookingConfirmed] = useState(false);
+
+  useEffect(() => {
+    setCurrentView(view);
+  }, [view]);
+
+  const handleBookSession = (teacherName) => {
+    setSelectedTeacherForBooking(teacherName);
+  };
+
+  const confirmBooking = () => {
+    setBookingConfirmed(true);
+    addToast('Booking successfully scheduled with Teacher!', 'success');
+    setTimeout(() => {
+      setBookingConfirmed(false);
+      setSelectedTeacherForBooking(null);
+    }, 2000);
+  };
+
+  const handleBuyChapter = (title, price) => {
+    addToast(`Purchase for "${title}" authorized! (₹${price})`, 'success');
+  };
+
+  return (
+    <div className="flex-1 flex flex-col justify-between h-full bg-slate-50">
+      <Header title="EduConnect Marketplace" />
+
+      {/* Navigation Sub-header for Marketplace sections */}
+      <div className="bg-slate-900 border-t border-slate-800 text-white flex shrink-0">
+        <button
+          onClick={() => { setCurrentView('tuition'); navigateTo('/marketplace/tuition'); }}
+          className={`flex-1 py-3 text-xs font-bold text-center border-b-2 transition-all ${
+            currentView === 'tuition' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-slate-400'
+          }`}
+        >
+          📍 Find Home Tuitions
+        </button>
+        <button
+          onClick={() => { setCurrentView('chapters'); navigateTo('/marketplace/chapters'); }}
+          className={`flex-1 py-3 text-xs font-bold text-center border-b-2 transition-all ${
+            currentView === 'chapters' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-slate-400'
+          }`}
+        >
+          📖 Chapter Micro-Store
+        </button>
+      </div>
+
+      {/* Main Container */}
+      <div className="flex-1 p-4 overflow-y-auto max-w-3xl mx-auto w-full">
+        {/* Search */}
+        <div className="mb-6">
+          <input
+            type="text"
+            placeholder={currentView === 'tuition' ? 'Search teachers by neighborhood or subject...' : 'Search micro chapters (e.g., Trigonometry)...'}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full px-4 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white shadow-xs"
+          />
+        </div>
+
+        {/* ==================== HOME TUITION VIEW ==================== */}
+        {currentView === 'tuition' && (
+          <div className="space-y-4">
+            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Top Verified Private Mentors</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {TEACHERS.filter(t => t.name.toLowerCase().includes(searchQuery.toLowerCase()) || t.subject.toLowerCase().includes(searchQuery.toLowerCase())).map((t) => (
+                <div key={t.id} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-xs hover:border-slate-200 transition-all flex flex-col justify-between">
+                  <div>
+                    <div className="flex justify-between items-start">
+                      <span className="text-[9px] bg-indigo-50 text-indigo-800 font-bold px-2 py-0.5 rounded">{t.subject}</span>
+                      <span className="text-xs font-bold text-amber-500">★ {t.rating}</span>
+                    </div>
+                    <h4 className="font-bold text-slate-900 text-xs mt-2">{t.name}</h4>
+                    <p className="text-[10px] text-slate-400">{t.qualification} • {t.exp} Exp</p>
+                    <p className="text-[10px] text-indigo-600 font-medium mt-1">📍 {t.city}</p>
+                  </div>
+                  <div className="flex gap-2 mt-4 pt-3 border-t border-slate-50 justify-between items-center">
+                    <span className="text-xs font-extrabold text-slate-800">{t.charges}</span>
+                    <button 
+                      onClick={() => handleBookSession(t.name)}
+                      className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[10px] px-3 py-1.5 rounded-xl transition-all"
+                    >
+                      Book Free Trial
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ==================== CHAPTER MICRO-STORE VIEW ==================== */}
+        {currentView === 'chapters' && (
+          <div className="space-y-4">
+            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Acquire Micro-Topic Video Lectures</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {MARKET_CHAPTERS.filter(c => c.title.toLowerCase().includes(searchQuery.toLowerCase()) || c.subject.toLowerCase().includes(searchQuery.toLowerCase())).map((c) => (
+                <div key={c.id} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-xs hover:border-slate-200 transition-all flex flex-col justify-between">
+                  <div>
+                    <div className="flex justify-between items-start">
+                      <span className="text-[9px] bg-emerald-50 text-emerald-800 font-bold px-2 py-0.5 rounded">{c.subject}</span>
+                      <span className="text-[10px] text-slate-400">{c.duration}</span>
+                    </div>
+                    <h4 className="font-bold text-slate-900 text-xs mt-2">{c.title}</h4>
+                    <p className="text-[10px] text-slate-400 mt-1">Syllabus Mapping: State Board</p>
+                  </div>
+                  <div className="flex gap-2 mt-4 pt-3 border-t border-slate-50 justify-between items-center">
+                    <span className="text-xs font-extrabold text-slate-800">₹{c.price} <span className="text-[9px] text-slate-400 font-normal">one-time</span></span>
+                    <button 
+                      onClick={() => handleBuyChapter(c.title, c.price)}
+                      className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[10px] px-3 py-1.5 rounded-xl transition-all"
+                    >
+                      Buy Now
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* TRIAL SESSION BOOKING MODAL */}
+      {selectedTeacherForBooking && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className="bg-white text-slate-800 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl flex flex-col border border-slate-100">
+            <div className="px-4 py-3 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+              <span className="text-[10px] bg-indigo-100 text-indigo-800 font-bold px-2 py-0.5 rounded">Schedule Demo / Trial Session</span>
+              <button onClick={() => setSelectedTeacherForBooking(null)} className="text-slate-400 hover:text-slate-700 bg-slate-200 rounded-full w-6 h-6 flex items-center justify-center">✕</button>
+            </div>
+            <div className="p-6 text-center space-y-4">
+              {bookingConfirmed ? (
+                <div className="space-y-2 py-6">
+                  <span className="text-3xl text-emerald-500">✔</span>
+                  <h3 className="font-bold text-slate-900">Booking Confirmed!</h3>
+                  <p className="text-xs text-slate-500">Teacher will call you shortly on your registered number.</p>
+                </div>
+              ) : (
+                <>
+                  <span className="text-3xl">📅</span>
+                  <h3 className="font-black text-slate-900 text-sm">Trial with {selectedTeacherForBooking}</h3>
+                  <p className="text-xs text-slate-500 leading-relaxed">
+                    Select your preferred timeframe. This demo will be organized at your home directly.
+                  </p>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <button onClick={confirmBooking} className="p-2 border rounded-xl hover:bg-indigo-50 font-bold hover:border-indigo-300">Mon/Wed (05:00 PM)</button>
+                    <button onClick={confirmBooking} className="p-2 border rounded-xl hover:bg-indigo-50 font-bold hover:border-indigo-300">Tue/Thu (06:30 PM)</button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Floating marketplace return buttons to core home */}
+      <div className="p-3 bg-slate-900 border-t border-slate-800 text-center flex justify-center">
+        <button 
+          onClick={() => navigateTo('/')}
+          className="text-white hover:text-indigo-400 text-xs font-bold py-1 px-3 bg-slate-800 rounded-lg"
+        >
+          ← Exit back to Landing Homepage
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
+// 12. SCREEN 8: FLOATING ADMISSION AI CHATBOT
+// ==========================================
+
+function AdmissionChatbot() {
+  const { addToast } = useContext(ToastContext);
+  const [isOpen, setIsOpen] = useState(false);
+  const [chatLog, setChatLog] = useState([
+    { sender: 'bot', text: 'Namaste! Main EduConnect Admission Assistant hun. Aap kya jaanna chahte hain?' }
+  ]);
+
+  const prebuiltQueries = [
+    { label: 'Fees details?', reply: 'We offer flexible packages:\n- Monthly: ₹1,500\n- Quarterly Revision: ₹4,200\n- Annual Comprehensive: ₹15,000' },
+    { label: 'Available Batches?', reply: 'We currently run Batch A (10th Std), Batch B (11th Std - JEE), and Batch C (12th Std - NEET) slots daily.' },
+    { label: 'Trial Class?', reply: 'Yes! Click "Explore Marketplace" on the homepage to instantly book a free physical home demo.' },
+  ];
+
+  const handleQueryClick = (q) => {
+    setChatLog(prev => [
+      ...prev,
+      { sender: 'user', text: q.label },
+      { sender: 'bot', text: q.reply }
+    ]);
+  };
+
+  return (
+    <div className="fixed bottom-6 right-6 z-50">
+      {isOpen ? (
+        <div className="w-80 bg-white border border-slate-100 rounded-3xl shadow-2xl overflow-hidden flex flex-col h-96">
+          {/* Header */}
+          <div className="bg-slate-900 text-white p-3.5 flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse"></span>
+              <span className="text-xs font-bold">EduConnect Assistant</span>
+            </div>
+            <button 
+              onClick={() => setIsOpen(false)}
+              className="text-xs text-slate-400 hover:text-white"
+            >
+              ✕
+            </button>
+          </div>
+
+          {/* Messages */}
+          <div className="flex-1 p-3 overflow-y-auto space-y-2 bg-slate-50 text-xs">
+            {chatLog.map((c, i) => (
+              <div key={i} className={`flex ${c.sender === 'bot' ? 'justify-start' : 'justify-end'}`}>
+                <div className={`p-2.5 rounded-2xl max-w-[85%] whitespace-pre-line leading-relaxed ${
+                  c.sender === 'bot' ? 'bg-white border text-slate-800' : 'bg-indigo-600 text-white'
+                }`}>
+                  {c.text}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Quick Replies list */}
+          <div className="p-2 border-t border-slate-100 bg-white space-y-1.5">
+            <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block">Frequently Asked Queries</span>
+            <div className="flex flex-wrap gap-1">
+              {prebuiltQueries.map((q, i) => (
+                <button
+                  key={i}
+                  onClick={() => handleQueryClick(q)}
+                  className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[10px] font-bold px-2 py-1 rounded-lg"
+                >
+                  {q.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <button
+          onClick={() => {
+            setIsOpen(true);
+            addToast('AI Assistant ready!', 'info');
+          }}
+          className="bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-xl transition-all hover:scale-105 border-2 border-indigo-400"
+          title="Admission Chatbot"
+        >
+          💬
+        </button>
+      )}
+    </div>
+  );
+}
